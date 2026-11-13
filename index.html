@@ -54,7 +54,9 @@ h1{font-size:18px;margin:4px 0 10px}
 <button class="tg" id="tHide">Hide known</button>
 <button class="tg" id="tShuf">Shuffle</button>
 <button class="tg" id="tReset">Reset</button>
+<button class="tg" id="tClearCache">Clear Cache</button>
 </div>
+<div class="small" id="cacheStatus" role="status" aria-live="polite"></div>
 <div class="bar"><i id="bar"></i></div>
 <div class="stat"><span id="pos"></span><span id="known"></span></div>
 <div id="stage"></div>
@@ -214,8 +216,24 @@ var D=[
 D.forEach(function(c,i){c.id=i});
 
 var S={cat:-1,star:false,hide:false,order:[],i:0,flip:false,known:{}};
-try{var sv=JSON.parse(localStorage.getItem('fsk')||'{}');S.known=sv.known||{};}catch(e){}
-function save(){try{localStorage.setItem('fsk',JSON.stringify({known:S.known}))}catch(e){}}
+var CACHE_KEY='fsk',restored=false;
+try{
+  var sv=JSON.parse(localStorage.getItem(CACHE_KEY)||'null');
+  if(sv&&typeof sv==='object'){
+    if(sv.known&&typeof sv.known==='object'&&!Array.isArray(sv.known)){
+      D.forEach(function(c){if(sv.known[c.id]===true)S.known[c.id]=true});
+    }
+    if(Number.isInteger(sv.cat)&&sv.cat>=-1&&sv.cat<CATS.length)S.cat=sv.cat;
+    S.star=sv.star===true;S.hide=sv.hide===true;
+    if(Array.isArray(sv.order)&&sv.order.every(function(id){return Number.isInteger(id)&&id>=0&&id<D.length})&&new Set(sv.order).size===sv.order.length){
+      var expected=D.filter(function(c){return (S.cat<0||c[0]===S.cat)&&(!S.star||c[1])&&(!S.hide||!S.known[c.id])});
+      if(expected.length===sv.order.length&&expected.every(function(c){return sv.order.indexOf(c.id)>=0})){
+        S.order=sv.order;S.i=Number.isInteger(sv.i)&&sv.i>=0&&sv.i<S.order.length?sv.i:0;S.flip=sv.flip===true;restored=true;
+      }
+    }
+  }
+}catch(e){}
+function save(){try{localStorage.setItem(CACHE_KEY,JSON.stringify(S))}catch(e){$('cacheStatus').textContent='Browser storage is unavailable. Progress is kept for this session only.'}}
 function $(id){return document.getElementById(id)}
 
 function build(shuffle){
@@ -234,6 +252,7 @@ function chips(){
   $('chips').innerHTML=h;
 }
 function render(){
+  save();
   chips();
   $('tStar').className='tg'+(S.star?' on':'');
   $('tHide').className='tg'+(S.hide?' on':'');
@@ -257,7 +276,7 @@ function render(){
   $('bKnow').onclick=function(){S.known[c.id]=true;save();advance()};
   $('bAgain').onclick=function(){delete S.known[c.id];save();advance()};
 }
-function flip(){S.flip=!S.flip;var el=$('card');if(el)el.classList.toggle('flip',S.flip)}
+function flip(){S.flip=!S.flip;var el=$('card');if(el)el.classList.toggle('flip',S.flip);save()}
 function go(d){S.i=(S.i+d+S.order.length)%S.order.length;S.flip=false;render()}
 function advance(){
   if(S.hide){var keep=S.order[S.i];if(S.known[keep]){S.order.splice(S.i,1);if(S.i>=S.order.length)S.i=0;S.flip=false;render();return}}
@@ -268,7 +287,13 @@ $('tStar').onclick=function(){S.star=!S.star;build(false)};
 $('tHide').onclick=function(){S.hide=!S.hide;build(false)};
 $('tShuf').onclick=function(){build(true)};
 $('tReset').onclick=function(){S.known={};S.cat=-1;S.star=false;S.hide=false;save();build(false)};
-build(false);
+$('tClearCache').onclick=function(){
+  S={cat:-1,star:false,hide:false,order:[],i:0,flip:false,known:{}};
+  build(false);
+  try{localStorage.removeItem(CACHE_KEY);$('cacheStatus').textContent='Cache cleared. Study progress and filters reset.'}
+  catch(e){$('cacheStatus').textContent='Session reset. Browser storage could not be cleared.'}
+};
+if(restored)render();else build(false);
 </script>
 </body>
 </html>
