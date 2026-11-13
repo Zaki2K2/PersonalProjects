@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Full-Stack + AI Interview Flashcards</title>
+<style>
+:root{--bg:#f6f5f1;--card:#fff;--ink:#1d1d1b;--mut:#6b6a64;--line:#e2e0d8;--acc:#2f5bd8;--ok:#1f8a4c;--bad:#c2410c;--star:#d99a00}
+@media (prefers-color-scheme:dark){:root{--bg:#161614;--card:#222220;--ink:#f1efe8;--mut:#a3a199;--line:#3a3935;--acc:#7da2ff;--ok:#4cc58a;--bad:#ff9160;--star:#f2b72b}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:640px;margin:0 auto;padding:14px 14px 40px}
+h1{font-size:18px;margin:4px 0 10px}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:6px 12px;font-size:13px;cursor:pointer}
+.chip.on{background:var(--acc);border-color:var(--acc);color:#fff}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px;font-size:13px}
+.tg{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;padding:6px 10px;font-size:13px;cursor:pointer}
+.tg.on{border-color:var(--acc);color:var(--acc);font-weight:600}
+.bar{height:6px;background:var(--line);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok);width:0;transition:width .25s}
+.stat{display:flex;justify-content:space-between;color:var(--mut);font-size:13px;margin:6px 0 10px}
+.scene{perspective:1200px}
+.card{position:relative;min-height:340px;cursor:pointer;transform-style:preserve-3d;transition:transform .45s}
+.card.flip{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow-y:auto}
+.back{transform:rotateY(180deg)}
+.cat{font-size:12px;color:var(--mut);display:flex;justify-content:space-between;margin-bottom:10px}
+.star{color:var(--star)}
+.q{font-size:21px;font-weight:600;line-height:1.35}
+.hint{position:absolute;bottom:12px;left:0;right:0;text-align:center;color:var(--mut);font-size:12px}
+.a{font-size:15.5px}
+.a b{color:var(--acc)}
+.a code{background:var(--bg);padding:1px 5px;border-radius:4px;font-size:13.5px}
+.a ul{margin:6px 0 8px;padding-left:20px}
+.a pre{background:var(--bg);padding:8px;border-radius:6px;font-size:12.5px;overflow-x:auto;margin:6px 0}
+.u{margin-top:10px;padding:10px 12px;border-left:3px solid var(--star);background:var(--bg);border-radius:6px;font-size:14.5px}
+.row{display:flex;gap:8px;margin-top:14px}
+.btn{flex:1;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:13px 8px;font-size:15px;cursor:pointer}
+.btn.again{color:var(--bad);border-color:var(--bad)}
+.btn.know{color:#fff;background:var(--ok);border-color:var(--ok);font-weight:600}
+.nav .btn{flex:none;width:25%}
+.empty{text-align:center;color:var(--mut);padding:60px 10px}
+.small{color:var(--mut);font-size:12px;text-align:center;margin-top:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Interview Flashcards</h1>
+<div class="chips" id="chips"></div>
+<div class="tools">
+<button class="tg" id="tStar">⭐ Only priority</button>
+<button class="tg" id="tHide">Hide known</button>
+<button class="tg" id="tShuf">Shuffle</button>
+<button class="tg" id="tReset">Reset</button>
+</div>
+<div class="bar"><i id="bar"></i></div>
+<div class="stat"><span id="pos"></span><span id="known"></span></div>
+<div id="stage"></div>
+<div class="small">Tap card to flip · Yaad hai = done, Phir parho = review again</div>
+</div>
+
+<script>
+// [cat, star, question, answer html, roman urdu]
+var CATS=["Full-Stack","Frontend","Jobs","Security","AI","Performance","DevOps","AI Tools","Intro","HR","Projects","Scenarios","Chatbot","Video Claims"];
+var D=[
+// ---------- 0 FULL-STACK ----------
+[0,1,"Frontend vs backend vs API?","<ul><li><b>Frontend</b>: what the user sees and clicks (browser).</li><li><b>Backend</b>: server logic, database, auth.</li><li><b>API</b>: the contract between them (e.g. REST over HTTP).</li></ul>","Frontend = screen, backend = dimagh aur data, API = dono ke beech ka rasta."],
+[0,1,"What is JSON and why is it used?","Text format for data: key-value pairs, arrays, numbers, strings, booleans, null. Light, readable, supported by every language. Standard body format for REST APIs.","JSON = data bhejne ka simple text format. Frontend aur backend isi mein baat karte hain."],
+[0,1,"Common HTTP status codes?","<ul><li><b>200</b> OK, <b>201</b> Created, <b>204</b> No Content</li><li><b>400</b> Bad request, <b>401</b> Not logged in, <b>403</b> Not allowed, <b>404</b> Not found, <b>409</b> Conflict, <b>422</b> Validation failed, <b>429</b> Too many requests</li><li><b>500</b> Server error, <b>502/503</b> Gateway or service down</li></ul>","2xx = kamyab, 4xx = client ki ghalti, 5xx = server ki ghalti. 401 = login nahi, 403 = ijazat nahi."],
+[0,1,"REST: main HTTP methods?","GET read, POST create, PUT replace, PATCH partial update, DELETE remove. GET should be safe and idempotent; PUT and DELETE are idempotent.","GET = lena, POST = banana, PATCH = thora badalna, DELETE = hatana."],
+[0,1,"Next.js: SSR vs CSR vs SSG vs ISR?","<ul><li><b>SSR</b>: HTML built on the server per request. Fresh, good SEO.</li><li><b>CSR</b>: browser builds the page with JS. Good for dashboards behind login.</li><li><b>SSG</b>: HTML built once at build time. Fastest, for static content.</li><li><b>ISR</b>: static page regenerated in background after a set time (<code>revalidate</code>).</li></ul>","SSR = har request pe server banaye, SSG = pehle se bana hua, ISR = SSG + kuch time baad khud update."],
+[0,1,"Next.js: Server vs Client Components?","<ul><li><b>Server</b> (default in App Router): runs on server, can read DB/secrets, sends no JS to browser.</li><li><b>Client</b> (<code>'use client'</code>): needed for state, effects, event handlers, browser APIs.</li></ul>Rule: keep as much as possible on the server; make only small interactive parts client.","Server component = browser ko JS nahi bhejta, DB seedha parh sakta hai. useState/onClick chahiye to 'use client'."],
+[0,1,"TypeScript: why use it?","JavaScript plus static types. Catches bugs at compile time, better autocomplete, safer refactoring, documents data shapes. Compiles to plain JS.","TypeScript = JS + types. Galtiyan chalane se pehle pakar leta hai."],
+[0,1,"TypeScript: type vs interface, any vs unknown?","<ul><li><code>interface</code> for object shapes (extendable); <code>type</code> for unions, aliases, utility types.</li><li><code>any</code> turns off checking. <code>unknown</code> is safe: you must narrow it before use.</li><li>Generics: reusable types like <code>Array&lt;T&gt;</code>.</li></ul>","any se bachein, unknown use karein. Generics = ek code, kai types."],
+[0,1,"React: props vs state?","<ul><li><b>Props</b>: inputs passed from parent, read-only.</li><li><b>State</b>: data owned by the component; changing it re-renders.</li></ul>","Props = bahar se aaye, state = apne andar ka, badle to screen dobara banti hai."],
+[0,1,"React hooks you must know?","<ul><li><code>useState</code> local state</li><li><code>useEffect</code> side effects (fetch, subscriptions) with dependency array and cleanup</li><li><code>useMemo</code>/<code>useCallback</code> cache value/function</li><li><code>useRef</code> mutable value or DOM node, no re-render</li><li><code>useContext</code> read context</li></ul>Rules: only at top level, only in components or custom hooks.","Hooks sirf top level pe, loop/if ke andar nahi. useEffect ka dependency array yaad rakho."],
+[0,1,"React: why do list items need a key?","Key lets React identify which item changed, moved or was removed, so it updates the DOM correctly. Use a stable unique id, not array index when the list can reorder.","key = har item ki pehchan. Index ki jagah unique id."],
+[0,1,"NestJS: modules, controllers, services?","<ul><li><b>Module</b>: groups related code (<code>@Module</code>).</li><li><b>Controller</b>: handles routes and requests (<code>@Controller</code>, <code>@Get</code>).</li><li><b>Service / provider</b>: business logic, injected where needed (<code>@Injectable</code>).</li></ul>","Controller = darwaza, Service = andar ka kaam, Module = in sab ka dabba."],
+[0,1,"NestJS: what are decorators?","Functions starting with <code>@</code> that attach metadata or behaviour to a class, method or parameter. Examples: <code>@Controller()</code>, <code>@Get()</code>, <code>@Body()</code>, <code>@Injectable()</code>, <code>@UseGuards()</code>. Nest reads this metadata to wire routes and DI.","Decorator = class/method pe lagaya hua @ label jo Nest ko batata hai ye kya hai."],
+[0,1,"NestJS: dependency injection (DI)?","A class declares what it needs in its constructor; Nest creates and passes the instance. Benefits: loose coupling, easy testing (mock services), single shared instances.","DI = class khud object nahi banati, Nest bana ke de deta hai. Testing aasan."],
+[0,1,"NestJS: Guards vs Pipes?","<ul><li><b>Guard</b>: decides if request may proceed (auth, roles). Returns true/false. Runs after middleware.</li><li><b>Pipe</b>: validates or transforms input (<code>ValidationPipe</code>, <code>ParseIntPipe</code>).</li></ul>Order: middleware, guards, interceptors, pipes, handler.","Guard = 'andar aa sakte ho?', Pipe = 'data sahi hai? theek kar do'."],
+[0,0,"NestJS: Interceptor vs Middleware vs Exception filter?","<ul><li><b>Middleware</b>: runs before route, like Express.</li><li><b>Interceptor</b>: wraps handler; can map response, log, cache, timing.</li><li><b>Exception filter</b>: catches errors and shapes the error response.</li></ul>","Interceptor = handler ke aage peeche ka wrapper. Filter = error handle."],
+[0,0,"PostgreSQL: tables, primary key, foreign key?","Table = rows and columns. <b>Primary key</b> uniquely identifies a row. <b>Foreign key</b> points to another table's key and enforces relationships.","PK = row ki unique ID, FK = dosre table se link."],
+[0,0,"SQL JOIN types?","<ul><li><b>INNER</b>: only matching rows.</li><li><b>LEFT</b>: all left rows + matches (NULL if none).</li><li><b>RIGHT</b>: mirror of left.</li><li><b>FULL</b>: all rows from both.</li></ul>","INNER = sirf common, LEFT = left wale sab + match."],
+[0,0,"What is a database index? Trade-off?","A sorted structure (usually B-tree) that makes lookups fast without scanning the whole table. Cost: extra storage and slower writes. Index columns used in WHERE, JOIN, ORDER BY.","Index = kitab ka index. Parhna tez, likhna thora slow."],
+[0,0,"ACID?","<ul><li><b>Atomicity</b>: all or nothing</li><li><b>Consistency</b>: rules always hold</li><li><b>Isolation</b>: concurrent transactions don't corrupt each other</li><li><b>Durability</b>: committed data survives crashes</li></ul>Example: bank transfer.","ACID = transaction pe bharosa. Paise nikle to dosre account mein zaroor jayein."],
+[0,0,"Prisma ORM: what and why?","Type-safe ORM. You define models in <code>schema.prisma</code>; <code>prisma migrate</code> changes the DB; <code>PrismaClient</code> gives typed queries (<code>findMany</code>, <code>create</code>, <code>include</code>). Fewer SQL mistakes, great TS autocomplete. Use raw SQL for complex queries.","Prisma = SQL ki jagah typed code. Schema file mein tables define karte hain."],
+[0,1,"Supabase: what is it?","Open-source Firebase alternative on top of PostgreSQL: Auth, REST/GraphQL API, Realtime, Storage, Edge Functions, plus Row Level Security.","Supabase = Postgres + auth + storage + realtime ek jagah."],
+[0,1,"Supabase Auth: how does it work?","Handles sign-up/login (email, OAuth, magic link), issues a <b>JWT</b>. The client sends the JWT; Postgres reads it (<code>auth.uid()</code>) so RLS policies know who the user is.","Login ke baad JWT milta hai, wahi database ko batata hai tum kaun ho."],
+[0,1,"Supabase: what is RLS?","<b>Row Level Security</b>: Postgres policies that decide which rows a user can SELECT/INSERT/UPDATE/DELETE. Example: <code>using (auth.uid() = user_id)</code>. Enable it on every table; with RLS on and no policy, access is denied.","RLS = har row pe permission. Bhoolo mat enable karna warna data leak."],
+[0,1,"Supabase: how to self-host with Docker?","Clone the supabase repo's <code>docker</code> folder, copy <code>.env.example</code> to <code>.env</code>, change all secrets (JWT secret, anon/service keys, DB password), run <code>docker compose up -d</code>. Services: Postgres, GoTrue (auth), PostgREST, Realtime, Storage, Kong gateway, Studio. Then: reverse proxy + HTTPS, backups, updates.","Docker compose se poora Supabase apne server pe. Pehle .env ke default secrets zaroor badlo."],
+// ---------- 1 FRONTEND ----------
+[1,1,"What is prop drilling?","Passing props through many middle components that don't use them, just to reach a deep child. Makes code hard to maintain. Fix: Context, state library, or component composition.","Prop drilling = data ko beech ke sab components se guzaarna jinhein uski zaroorat nahi."],
+[1,1,"Context vs Zustand vs Redux?","<ul><li><b>Context</b>: built in, good for rarely changing data (theme, user). All consumers re-render on change.</li><li><b>Zustand</b>: tiny store, no boilerplate, components subscribe to slices.</li><li><b>Redux (Toolkit)</b>: big apps, strict patterns, devtools, middleware.</li></ul>","Chota = Context, medium = Zustand, bara aur team = Redux Toolkit."],
+[1,1,"Dashboard is slow. What do you check?","<ul><li>Network tab: slow or large API calls, too many requests</li><li>Backend: slow queries, N+1, missing indexes, caching</li><li>React Profiler: unnecessary re-renders</li><li>Big lists: pagination or virtualization</li><li>Bundle size: code splitting, lazy loading</li><li>Heavy charts/images, no memoization</li></ul>Measure first, then fix the biggest bottleneck.","Pehle naapo (Network + Profiler), phir sab se bari wajah theek karo. Andaza nahi."],
+[1,1,"Lazy loading?","Load code or content only when needed. React: <code>React.lazy</code> + <code>Suspense</code>, Next.js <code>dynamic()</code>, images <code>loading='lazy'</code>. Smaller first load.","Lazy loading = jab zaroorat ho tab load karo."],
+[1,1,"Pagination vs infinite scroll vs virtualization?","<ul><li><b>Pagination</b>: fetch data in pages (offset or cursor).</li><li><b>Infinite scroll</b>: load more as you scroll.</li><li><b>Virtualization</b>: render only visible rows (react-window, TanStack Virtual). Fixes DOM size for huge lists.</li></ul>Cursor pagination is better than offset for big or changing data.","Pagination = data thora thora lana, virtualization = sirf nazar aane wali rows draw karna."],
+[1,0,"How do you find a bug?","Reproduce it, read the error/console, check the network response, isolate with logs or breakpoints, inspect recent changes (<code>git bisect</code>), write a test, fix, verify.","Pehle dohrao, phir chhota karo, phir wajah dhoondo, aakhir mein test likho."],
+[1,0,"Unnecessary re-renders: how to reduce?","Keep state local, <code>React.memo</code>, <code>useMemo</code>/<code>useCallback</code> for stable props, split big components, select only needed store slices, stable keys. Profile before optimizing.","Sirf wahi component dobara bane jo badla ho."],
+// ---------- 2 JOBS ----------
+[2,1,"Node.js event loop?","Node runs JS on a single thread. The event loop picks callbacks from queues (timers, I/O, <code>setImmediate</code>; microtasks like promises run first). I/O is handed to the OS or libuv thread pool, so Node handles many connections without blocking.","Ek thread, lekin I/O background mein. CPU ka bhari kaam isse block kar deta hai."],
+[2,1,"Node: threads, worker threads, cluster?","<ul><li>libuv thread pool does file/crypto/DNS work.</li><li><b>Worker threads</b>: run CPU-heavy JS in parallel.</li><li><b>Cluster</b>: multiple processes to use all CPU cores.</li></ul>Heavy CPU in the main thread blocks all requests.","Bhari CPU kaam worker thread ya queue worker mein bhejo."],
+[2,1,"Redis: what and why?","In-memory key-value store. Very fast. Uses: cache, sessions, rate limiting, pub/sub, and the backing store for job queues like BullMQ.","Redis = RAM mein tez database. Cache aur queue ke liye."],
+[2,1,"BullMQ: queue, worker, job?","Queue library for Node on Redis. <b>Producer</b> adds a job to a <b>Queue</b>; a separate <b>Worker</b> process takes it and runs it. Features: retries with backoff, delay, priority, repeatable jobs, concurrency, rate limits.","API job queue mein daalti hai, worker baad mein karta hai. User ko wait nahi."],
+[2,1,"Cron vs queue: when to use which?","<ul><li><b>Cron</b>: run something at a time/interval (nightly report). Simple, but no retries, runs on every instance unless guarded.</li><li><b>Queue</b>: run work triggered by events (send email, process upload) with retries, scaling, visibility.</li></ul>Best: BullMQ repeatable job = schedule + queue safety.","Time pe = cron, event pe = queue. Dono chahiye to BullMQ repeatable."],
+[2,0,"Job retries, delayed and repeatable jobs?","<ul><li><b>Retries</b>: <code>attempts</code> + exponential <code>backoff</code>; failed jobs go to a failed set / dead-letter.</li><li><b>Delayed</b>: <code>delay</code> option, runs later.</li><li><b>Repeatable</b>: cron pattern or <code>every</code>.</li></ul>Make jobs <b>idempotent</b> so a retry doesn't double-charge or double-email.","Retry safe banane ke liye job idempotent honi chahiye."],
+// ---------- 3 SECURITY ----------
+[3,1,"HIPAA, PHI, BAA?","<ul><li><b>HIPAA</b>: US law protecting health data.</li><li><b>PHI</b>: Protected Health Information (name + health data, IDs, dates...).</li><li><b>BAA</b>: Business Associate Agreement; contract with any vendor (cloud, email, AI) that handles PHI.</li></ul>","HIPAA = qanoon, PHI = mareez ka data, BAA = vendor ke saath likhit muahida."],
+[3,1,"HIPAA: technical safeguards to build?","Encryption in transit (TLS) and at rest, role-based access control, audit logs of who accessed what, unique user IDs, auto logout, backups, minimum necessary access, no PHI in logs or in third-party tools without a BAA.","Encrypt, access control, audit log, aur PHI logs mein nahi."],
+[3,1,"Authentication vs authorization?","<b>Authentication</b>: who are you? (login). <b>Authorization</b>: what may you do? (roles, permissions). 401 = not authenticated, 403 = not authorized.","Authn = tum kaun, Authz = tum kya kar sakte ho."],
+[3,1,"JWT: structure and risks?","Three Base64 parts: header.payload.signature. Server verifies the signature, so no session lookup. Keep it short-lived, never put secrets in the payload (it's readable), use refresh tokens, store safely (httpOnly cookie). Hard to revoke before expiry.","JWT signed hota hai, encrypted nahi. Chhoti expiry rakho."],
+[3,1,"Roles and RBAC?","Role-Based Access Control: users get roles (admin, doctor, patient); roles get permissions. Check on the backend (Nest Guard + roles decorator), never only in the UI. Principle of least privilege.","Role se permission. Check hamesha backend pe."],
+[3,0,"XSS and how to prevent it?","Attacker injects script that runs in other users' browsers. Prevent: escape output (React does by default), avoid <code>dangerouslySetInnerHTML</code>, sanitize HTML, Content-Security-Policy, httpOnly cookies.","XSS = dusre ke browser mein script chalana. Output escape karo."],
+[3,0,"CSRF and how to prevent it?","Attacker tricks a logged-in user's browser into sending a request using their cookies. Prevent: SameSite cookies, CSRF tokens, check Origin, use Authorization header instead of cookie auth.","CSRF = user ki jaanib se chupke se request. SameSite cookie + token."],
+[3,0,"SQL injection and prevention?","User input changes the SQL query. Prevent: parameterized queries / prepared statements, ORM (Prisma), validate input, least-privilege DB user. Never build SQL by string concatenation.","Query mein user ka text direct mat jodo, parameters use karo."],
+[3,0,"Rate limiting and CORS?","<b>Rate limit</b>: cap requests per user/IP (Nest <code>@nestjs/throttler</code>, Redis) vs brute force and abuse; returns 429. <b>CORS</b>: browser rule on which origins may call your API; allow only trusted origins. CORS is not authentication.","Rate limit = hadd se zyada request band. CORS = kaun si website API call kar sakti hai."],
+[3,0,"Encryption: in transit vs at rest?","In transit: TLS/HTTPS. At rest: disk/DB encryption (AES-256), field-level encryption for very sensitive data. Hash passwords with bcrypt/argon2 (not encryption). Manage keys in a vault/KMS.","Rastay mein = HTTPS, rakhay hue = AES. Password hash hota hai."],
+// ---------- 4 AI ----------
+[4,1,"LLM basics: token?","A chunk of text (word piece) the model reads and writes. About 4 characters or 0.75 words in English. Pricing and limits are counted in tokens.","Token = lafz ka tukra. Cost aur limit isi pe."],
+[4,1,"Context window?","Maximum tokens the model can see at once: prompt + history + retrieved docs + answer. Beyond it, text must be cut or summarized.","Context window = model ki yaaddasht ka size ek waqt mein."],
+[4,1,"Hallucination and how to reduce it?","Model confidently states false things. Reduce: RAG with source documents, tell it to answer only from context and say 'I don't know', low temperature, citations, validation, human review for critical use.","Hallucination = jhoot confidence se. RAG aur 'sirf context se jawab do'."],
+[4,1,"Embeddings?","A list of numbers (vector) representing meaning of text. Similar meaning = vectors close together. Used for semantic search, RAG, recommendations.","Embedding = matlab ko numbers mein badalna. Milte julte matlab nazdeek."],
+[4,1,"Vector DB and pgvector?","Stores embeddings and finds nearest neighbours (cosine / L2 distance). <b>pgvector</b> adds a <code>vector</code> column type and similarity search to PostgreSQL; use HNSW or IVFFlat index. Good when you already use Postgres/Supabase.","pgvector = Postgres mein hi vector search. Alag DB ki zaroorat nahi."],
+[4,1,"RAG architecture (draw this)","<b>Ingest</b>: documents &rarr; chunks &rarr; embeddings &rarr; vector DB.<br><b>Query</b>: question &rarr; embedding &rarr; top-k similar chunks &rarr; prompt (question + chunks) &rarr; LLM &rarr; answer with sources.<br>Why: fresh/private data, fewer hallucinations, no retraining.","Pehle documents ko tukron mein kaato, vectors banao, store karo. Sawal aaye to milte tukre dhoondo aur LLM ko do."],
+[4,1,"RAG: chunking and retrieval tips?","Chunks about 300-800 tokens with overlap, keep metadata (source, page). Improve retrieval: hybrid search (keyword + vector), reranking, filter by metadata/permissions, tune top-k.","Chunk na bohat chhota na bara. Overlap rakho."],
+[4,1,"How did you build a chatbot? (talk track)","Say: problem, data sources, flow. Example: user message &rarr; backend (NestJS) &rarr; retrieve chunks from pgvector &rarr; LLM with system prompt + history &rarr; stream response to Next.js UI. Mention: chat history, prompt design, guardrails, evaluation, cost, and what you would improve.","Apna chatbot project 5 steps mein bolo: problem, data, flow, challenges, result."],
+[4,0,"Tool calling (function calling)?","You describe functions (name, JSON schema). The model returns which tool to call with arguments; <b>your code</b> runs it and sends the result back; the model writes the final answer. Lets LLMs fetch data or take actions.","LLM sirf batata hai kaun sa function chalana hai, chalate hum hain."],
+[4,0,"MCP (Model Context Protocol)?","Open standard to connect AI apps to tools and data through MCP servers (e.g. database, GitHub, files). One protocol instead of custom integration per tool.","MCP = AI ke liye tools ka USB-C."],
+[4,0,"AI agents?","An LLM in a loop: think, choose a tool, observe the result, repeat until the goal is done. Needs tools, memory, guardrails and step limits. Riskier than a fixed workflow, so use the simplest design that works.","Agent = LLM jo khud kai step mein tools use karke kaam poora kare."],
+// ---------- 5 PERFORMANCE ----------
+[5,0,"Frontend performance checklist?","Code splitting, lazy load, optimized images (next/image, WebP), memoization, avoid huge re-renders, CDN, caching headers, fewer third-party scripts. Metrics: LCP, INP, CLS.","Bundle chhota, images halki, re-render kam."],
+[5,0,"Backend performance checklist?","Cache (Redis), async/queue heavy work, avoid blocking the event loop, pagination, compression, connection pooling, fewer round trips, profiling.","Bhari kaam queue mein, baar baar wala data cache mein."],
+[5,0,"Database optimization?","Right indexes, select only needed columns, avoid N+1, use <code>EXPLAIN ANALYZE</code>, connection pooling (pgBouncer), read replicas, partitioning for huge tables, VACUUM.","Index lagao aur EXPLAIN se query dekho."],
+[5,0,"N+1 query problem?","1 query for a list, then N extra queries (one per item). Fix: JOIN / eager loading (Prisma <code>include</code>), batching (DataLoader), <code>IN</code> query.","1 + N queries = slow. Ek hi query mein sab lao."],
+[5,0,"EXPLAIN / EXPLAIN ANALYZE?","Shows the query plan. <code>ANALYZE</code> actually runs it and shows real time. Look for Seq Scan on big tables (maybe add index), row estimate vs actual, expensive joins/sorts.","EXPLAIN = query ka naqsha. Seq Scan bari table pe = shak."],
+[5,0,"Caching: types and invalidation?","Browser, CDN, app (Redis), DB cache. Strategies: cache-aside, TTL. Hard part: invalidation, so keep TTLs sensible and delete keys on write.","Cache tez karta hai lekin purana data ka khatra. TTL rakho."],
+[5,0,"Load testing?","Simulate many users to find limits and bottlenecks before production. Tools: k6, Artillery, JMeter. Watch latency (p95/p99), error rate, throughput, CPU/memory, DB connections.","Load test = production se pehle bhid ka imtihan."],
+// ---------- 6 DEVOPS ----------
+[6,0,"Docker vs VM?","<b>VM</b>: full OS per machine on a hypervisor, heavy. <b>Container</b>: shares host kernel, packages only app + dependencies, starts in seconds. Image = blueprint, container = running instance. Dockerfile builds the image; compose runs many containers.","VM = poora computer, container = sirf app ka dabba."],
+[6,0,"Dockerfile best practices?","Small base image (alpine/slim), multi-stage builds, copy package files first for layer cache, <code>.dockerignore</code>, non-root user, no secrets in image.","Multi-stage build se image chhoti aur safe."],
+[6,0,"CI/CD?","<b>CI</b>: on every push, auto build, lint, test. <b>CD</b>: auto deploy (or ready to deploy) after checks pass. Tools: GitHub Actions, GitLab CI. Gives fast feedback and fewer manual errors.","Push karo, test khud chalein, pass ho to deploy khud."],
+[6,0,"Load balancing?","Spreads traffic across several server instances for availability and scale. Algorithms: round robin, least connections. Does health checks. Examples: Nginx, AWS ALB. Keep servers stateless (sessions in Redis).","Load balancer = traffic ko kai servers mein baantna."],
+[6,0,"Kubernetes in short?","Orchestrates containers: pods, deployments, services, ingress. Handles scaling, self-healing, rolling updates. Don't use it for a small app; Docker Compose or a managed platform may be enough.","K8s = bohat saare containers ka manager."],
+[6,0,"Cloud deployment options?","Vercel (Next.js), AWS/GCP/Azure (ECS, Cloud Run, VMs), Railway/Render/Fly. Concerns: env vars/secrets, managed DB, HTTPS, logging/monitoring, backups, regional compliance (HIPAA-eligible services + BAA).","Chhota app = managed platform, bara = AWS/GCP. Secrets code mein nahi."],
+// ---------- 7 AI TOOLS ----------
+[7,0,"Claude Code?","Anthropic's AI coding agent for the terminal/IDE. It reads your repo, edits files, runs commands and tests, and works on tasks across the codebase while you review the changes.","Claude Code = terminal mein coding agent jo repo parh ke kaam karta hai."],
+[7,0,"CLAUDE.md?","A markdown file in your repo (or home folder) that Claude Code loads at the start of each session. Put: project overview, commands to build/test, code style, architecture notes, rules. Keep it short and specific.","CLAUDE.md = project ke qawaid ki file jo Claude har baar parhta hai."],
+[7,0,"How do you use AI coding agents responsibly?","Give clear small tasks, ask for a plan first, review every diff, run tests, never paste secrets or PHI, check security-sensitive code yourself. AI speeds up work; you are still responsible.","AI se kaam tez, lekin review aur test aap ki zimmedari."],
+// ---------- 8 INTRO ----------
+[8,1,"60-second self intro (template)","<ol style='margin:6px 0;padding-left:20px'><li>Who you are + years of experience / education.</li><li>Main stack: Next.js, TypeScript, NestJS, PostgreSQL, Supabase.</li><li>One strong project (e.g. AI chatbot with RAG): problem, what you built, result.</li><li>Also: background jobs, security basics, Docker.</li><li>Why this role.</li></ol>Practise it aloud 3 times, with a timer.","Apna intro 5 hisson mein: main kaun, stack, ek project, extra skills, is job mein kyun."],
+// ---------- 2 (extra) NESTJS SCHEDULING ----------
+[2,1,"NestJS scheduling: how do you run a task on a schedule?","<ul><li>Install <code>@nestjs/schedule</code>, import <code>ScheduleModule.forRoot()</code>.</li><li>On a service method: <code>@Cron('0 2 * * *')</code> (or <code>CronExpression.EVERY_DAY_AT_2AM</code>), <code>@Interval(5000)</code>, <code>@Timeout(10000)</code>.</li><li>Add or remove jobs at runtime with <code>SchedulerRegistry</code>.</li></ul><pre>@Injectable()\nexport class ReportService {\n  @Cron('0 2 * * *')\n  async nightly() { /* work */ }\n}</pre>","@nestjs/schedule + @Cron decorator. Runtime pe jobs badalne ho to SchedulerRegistry."],
+[2,1,"NestJS @Cron problem: app runs on 3 instances. What happens?","The job runs <b>3 times</b> (once per instance): duplicate emails, double charges. Fixes:<ul><li>Run schedulers in one dedicated instance (env flag).</li><li>Distributed lock (Redis lock or Postgres advisory lock).</li><li>Best: BullMQ <b>repeatable job</b>; only one worker takes each run.</li></ul>","Kai instances = cron kai baar chalta hai. Lock ya BullMQ repeatable se ek hi baar."],
+[2,1,"NestJS + BullMQ: how do you set it up?","<ul><li><code>@nestjs/bullmq</code>: <code>BullModule.forRoot({connection:{host,port}})</code> and <code>BullModule.registerQueue({name:'email'})</code>.</li><li><b>Producer</b>: <code>@InjectQueue('email')</code> then <code>queue.add('send', data, {attempts:3, backoff:{type:'exponential', delay:1000}})</code>.</li><li><b>Consumer</b>: class with <code>@Processor('email')</code> extending <code>WorkerHost</code>, method <code>process(job)</code>.</li></ul>","Producer queue mein job dale, @Processor class kaam kare. attempts + backoff = retry."],
+// ---------- 7 (extra) HOW I CODE ----------
+[7,1,"HR: 'How do you code?' (short answer)","1. Understand the task, ask questions, write a short plan.<br>2. Break it into small steps.<br>3. Use <b>Claude Code</b> to draft or explore code, but I review every diff.<br>4. Run tests and try it myself.<br>5. Small commits, pull request, code review.<br><br>Say: 'AI speeds me up, but I own the code and the quality.'","Plan, chhote steps, Claude Code se draft, khud review, test, PR. Zimmedari meri."],
+[7,1,"How to mention Claude Code in the interview?","Keep it to 3 points:<ul><li>I use it for exploring a codebase, writing boilerplate, tests and refactors.</li><li>I keep project rules in <code>CLAUDE.md</code> (commands, style, architecture).</li><li>I always review diffs, run tests, and never share secrets or private data.</li></ul>","Teen baatein: kahan use karta hoon, CLAUDE.md, aur review/test ke baad hi merge."],
+[7,0,"AI generated wrong or insecure code. What do you do?","Don't trust it blindly: read the diff, run tests, check edge cases, security (input validation, auth, secrets), and performance. Give the AI better context or a smaller task and try again. If I can't explain a line, I don't merge it.","AI ka code bhi meri zimmedari. Samajh na aaye to merge nahi."],
+// ---------- 9 HR ----------
+[9,1,"How to answer: short and to the point","Rule: <b>answer first</b>, then one reason or example, then stop (20-40 seconds). Don't read a long story. Pause, think for 2 seconds, speak slowly. If you don't know: say what you do know, and how you would find out.","Pehle seedha jawab, phir ek misaal, phir ruk jao. Lamba nahi."],
+[9,1,"Tell me about yourself (HR version)","Present, past, future:<br>• <b>Now</b>: Software Engineer with JavaScript/TypeScript, working on a fintech web app.<br>• <b>Before</b>: projects in Angular, React, AI integration.<br>• <b>Next</b>: want to grow in full-stack with NestJS, Next.js and AI.<br>Keep under 60 seconds.","Abhi kya, pehle kya, aage kya chahta hoon. 60 second."],
+[9,1,"Which projects do you OWN? What was your role?","Pick 2 projects. For each say: what it is, <b>what exactly you built or led</b>, tech used. Use honest words: 'I owned the recurring demand feature end to end' vs 'I contributed to the dashboard module'. Don't claim what you didn't do; the interviewer will ask follow-ups.","Sach bolo: 'main owner' ya 'main ne contribute kiya'. Follow-up sawal aayenge."],
+[9,0,"Why do you want this job?","Link three things: their work (agentic AI + full-stack client projects), your skills (JS/TS, APIs, UI), and what you want to learn (NestJS, Next.js, queues, AI engineering). Show curiosity and the ability to learn fast.","Unka kaam, meri skill, aur main kya seekhna chahta hoon."],
+[9,0,"Strengths and weakness?","<b>Strength</b>: learns fast, delivers features end to end, communicates clearly. Give one proof.<br><b>Weakness</b>: real but fixable. Example: 'I have less production experience with NestJS and queues; I am closing that gap with projects and Claude Code'.","Kamzori sach ho lekin us par kaam bhi dikhao."],
+[9,1,"You have not used some of these tools in production. What do you say?","Be honest, show base knowledge, show learning speed: 'I haven't run BullMQ in production, but I understand queues, retries and workers, and I have built a small demo. I can pick it up quickly.' Never bluff; one follow-up will expose it.","Jhoot nahi. 'Production mein nahi kiya, lekin concept aur demo hai, jaldi seekh lunga.'"],
+[9,0,"Tell me about a conflict or a hard situation (STAR)","<b>S</b>ituation, <b>T</b>ask, <b>A</b>ction, <b>R</b>esult. Example themes: tight deadline, unclear requirements, disagreement with a teammate, production bug. Focus on what <b>you</b> did and what you learned.","STAR: halaat, zimmedari, mera action, nateeja."],
+[9,0,"Why are you leaving your current job? 5-year plan? Salary?","<ul><li><b>Leaving</b>: looking for growth and new tech, nothing negative about the current company.</li><li><b>5 years</b>: strong full-stack/AI engineer, maybe tech lead.</li><li><b>Salary</b>: research the market, give a range, say you are flexible for the right role.</li></ul>","Purani company ki burai nahi. Growth chahiye. Salary range batao."],
+[9,0,"Questions you can ask the interviewer","<ul><li>What does the team's tech stack and workflow look like?</li><li>What would the first 3 months look like?</li><li>How do you use AI tools in development?</li><li>How is code reviewed and deployed?</li></ul>","2-3 sawal zaroor poochho, interest dikhta hai."],
+// ---------- 10 PROJECTS ----------
+[10,1,"Project walkthrough on screen share: structure (3-4 min)","<ol style='margin:6px 0;padding-left:20px'><li><b>One line</b>: what it is and who uses it.</li><li><b>Demo</b>: show 1-2 main flows only.</li><li><b>Design</b>: frontend, backend, DB, queues, deploy (draw or show folders).</li><li><b>My role</b>: what I built or owned.</li><li><b>2 key challenges</b>: problem, what I tried, what I chose, result.</li><li>Stop and ask: 'Want me to go deeper anywhere?'</li></ol>","Ek line, demo, design, mera role, 2 challenges, phir pooch lo."],
+[10,1,"Screen share: how to prepare","Close private tabs and notifications. Open the app logged in with demo data, the code editor with the folder tree, and any diagram. Practise the demo once. Have a fallback (screenshots) if the internet fails. Don't show secrets or .env files.","Pehle se tab kholo, demo data rakho, .env mat dikhao."],
+[10,1,"Key challenge answer formula","<b>Problem</b> (what broke or was hard) &rarr; <b>Options</b> (2 ways) &rarr; <b>Decision</b> (why) &rarr; <b>Result</b> (number if possible: faster, fewer bugs). Example topics: slow lists, state management, auth/roles, form complexity, API errors, deadlines.","Masla, options, faisla, nateeja. Number ho to behtar."],
+[10,1,"Project card: CustomerCore (NovaCTO)","Known: fintech web app, live product, Angular + TypeScript + RxJS (and React). <b>Prepare 6 lines</b>: what it does; who uses it; your modules/features (e.g. recurring demand); architecture; one challenge; result. Practise saying it in 60 seconds.","Ye line aap ne apne alfaaz mein bharni hain: kya, kis ke liye, aap ka hissa, challenge."],
+[10,1,"Project card: SyncMLS (Volpea Solutions)","Known: previously named Smart MLS. <b>Prepare 6 lines</b>: product purpose; your role; main features; tech stack; one hard problem (data sync? performance? UI?); outcome.","SyncMLS ke 6 jumle tayyar rakho."],
+[10,1,"Project card: BeMyAdmin (company + project management tool)","Known: in beta, a company and project management tool. <b>Prepare</b>: why it exists; main modules (projects, tasks, users, roles?); auth and permissions; your part; one challenge; what is next.","Roles aur permissions ka zikr zaroor karna, backend interviewer ko pasand aata hai."],
+[10,1,"Project card: VirtualFit AI (office competition, with chatbot)","Known: built with colleagues for an office competition, includes a chatbot. Good for the AI questions. <b>Prepare</b>: idea; your part; how the chatbot works (LLM, prompt, data, RAG?); one challenge; what you'd improve.","Chatbot wala sawal yahin se answer karo: kya, kaise, kya behtar karta."],
+[10,0,"Project card: AutoPilotDevs","<b>Prepare 6 lines</b>: what it is; your role; stack; main feature; one challenge; result. Only include it if you can explain it well.","Sirf wo project dikhao jo achi tarah samjha sako."],
+[10,1,"Bridge: Angular experience to NestJS / Next.js","<ul><li>NestJS is inspired by Angular: <b>modules, decorators, dependency injection, services</b> work the same way.</li><li>TypeScript is the same everywhere.</li><li>RxJS ideas (async streams) help with async backend code.</li><li>React/Next: components, props, state, hooks.</li></ul>Say: 'My Angular and TypeScript base makes NestJS patterns familiar.'","Angular aur NestJS ka structure milta hai: module, decorator, DI. Ye aap ki taqat hai."],
+// ---------- 11 SCENARIOS ----------
+[11,1,"Scenario: an API endpoint became slow. How do you debug?","1. Measure: logs, APM, response time per endpoint.<br>2. Check DB: slow query, <code>EXPLAIN ANALYZE</code>, missing index, N+1.<br>3. Check external calls and blocking code.<br>4. Fix: index, cache, pagination, queue heavy work.<br>5. Verify with a load test.","Naapo, DB dekho, external calls dekho, fix, dobara test."],
+[11,1,"Scenario: sending 10,000 emails or generating a big report","Don't do it inside the request. Add jobs to a <b>BullMQ queue</b>; workers process them in the background with retries; save status; notify the user when done (email, websocket or polling). Respect provider rate limits.","Request mein nahi, queue mein. User ko 'processing' dikhao."],
+[11,1,"Scenario: reminder 24 hours before an appointment","Option A: <b>delayed BullMQ job</b> with <code>delay = appointment - 24h - now</code>; store jobId to cancel or reschedule if it changes.<br>Option B: a repeatable job every minute that queries due reminders (indexed column).<br>Make it idempotent (flag <code>reminderSent</code>).","Delayed job ya har minute due reminders ki query. Dohra na jaye."],
+[11,1,"Scenario: payment webhook arrives twice","Use an <b>idempotency key</b> (event id) stored in DB with a unique constraint; if seen, return 200 and skip. Verify the signature, respond fast, process in a queue.","Event id save karo, dobara aaye to ignore."],
+[11,1,"Scenario: user A can see user B's data","Authorization bug (IDOR). Fix: always check ownership on the server (<code>where userId = currentUser</code>), use Guards/roles, Postgres RLS, tests for access. Then audit logs and other endpoints.","Backend pe ownership check, RLS, aur baqi endpoints bhi audit."],
+[11,1,"Scenario: cron job ran twice in production","Likely multiple instances. Fix with a distributed lock, a single scheduler instance, or a BullMQ repeatable job. Make the job idempotent so a second run does no harm.","Kai instances = kai baar. Lock lagao aur job idempotent banao."],
+[11,0,"Scenario: third-party API is down or slow","Timeouts, retries with exponential backoff, circuit breaker, fallback or cached data, queue the work, alerting, failed jobs to a dead-letter queue.","Timeout, retry, circuit breaker, queue."],
+[11,0,"Scenario: chatbot over company PDFs with private (PHI) data","RAG: chunk, embed (pgvector), retrieve with user permission filters; only use vendors with a BAA; redact PHI where possible; no PHI in logs; audit access; answer only from sources and cite them.","RAG + permission filter + BAA + logs mein PHI nahi."],
+[11,0,"Scenario: user uploads a large file","Upload directly to object storage with a pre-signed URL (not through your API), then trigger a queue job to scan/process it. Limit size and type, store metadata in DB.","Pre-signed URL se seedha storage mein, phir queue se process."],
+[11,0,"Scenario: need real-time updates (notifications, chat)","Options: <b>WebSocket</b> (two-way, Nest gateways), <b>SSE</b> (server to client, simple), <b>Supabase Realtime</b>, or polling for simple cases. Scale WebSockets with Redis pub/sub.","Two-way = WebSocket, sirf server se = SSE."],
+[11,0,"Scenario: deployed a bug to production","Roll back or hotfix first, communicate, find the root cause with logs, add a test, then a short post-mortem. Prevent with CI, staging, feature flags and monitoring.","Pehle rollback, phir wajah, test, aur seekh."],
+[11,0,"Scenario: change a database schema without downtime","Expand and contract: add the new column (nullable), deploy code that writes both, backfill, switch reads, then remove the old column. Use migrations (Prisma Migrate) and avoid long locks.","Pehle naya column add, phir data bharo, phir purana hatao."],
+// ---------- 12 CHATBOT ----------
+[12,1,"What technology is used to build a chatbot?","<ul><li><b>UI</b>: Next.js + React chat window, streaming text.</li><li><b>API</b>: NestJS (auth, rate limit, chat history).</li><li><b>LLM</b>: OpenAI, Claude or Gemini API.</li><li><b>RAG</b>: embedding model + vector DB (pgvector on Supabase/Postgres).</li><li><b>Orchestration</b>: LangChain, LlamaIndex, Vercel AI SDK, or the plain SDK.</li><li><b>Storage</b>: PostgreSQL (users, chats), Redis (cache, rate limit).</li><li><b>Jobs</b>: BullMQ to ingest and embed documents.</li><li><b>Ops</b>: Docker, logging and evaluation (Langfuse / LangSmith).</li></ul>","UI + API + LLM + vector DB + queue + Docker. Ye 6 cheezein yaad rakho."],
+[12,1,"Chatbot request flow, step by step","1. User types in Next.js chat UI.<br>2. Request goes to NestJS (auth check, rate limit).<br>3. Load recent chat history from DB.<br>4. Embed the question, search pgvector for top-k chunks.<br>5. Build prompt: system rules + chunks + history + question.<br>6. Call the LLM (stream: true); allow tool calls if needed.<br>7. Stream tokens back to the UI (SSE).<br>8. Save messages and sources; log cost and latency.","Sawal, auth, history, vector search, prompt, LLM, stream, save."],
+[12,1,"Chatbot: how do you keep conversation memory?","The LLM has no memory; you send history each time. Store messages per conversation id. Keep the last N messages (sliding window), summarize older ones, and stay inside the context window. Optionally retrieve old messages by embedding similarity.","Har baar history khud bhejni parti hai. Purani ko summarize karo."],
+[12,0,"Chatbot: how do you stream the answer?","Call the LLM with <code>stream: true</code>; NestJS forwards tokens using <b>SSE</b> (Server-Sent Events) or WebSocket; the Next.js client reads the stream (or uses Vercel AI SDK <code>useChat</code>). User sees text appear fast.","Token aate hi UI pe dikhao, user ko intezar nahi."],
+[12,1,"Chatbot: main problems and fixes","<ul><li><b>Hallucination</b>: RAG, answer only from context, cite sources.</li><li><b>Cost</b>: shorter prompts, cache, smaller model where possible.</li><li><b>Latency</b>: streaming, cache, fewer chunks.</li><li><b>Context limit</b>: summarize, retrieve less.</li><li><b>Security</b>: prompt injection, PHI leaks.</li><li><b>Quality</b>: evaluation set + feedback.</li></ul>","Hallucination, cost, speed, context, security, quality."],
+[12,1,"What is prompt injection and how do you defend?","Malicious text (from the user or inside a document) tells the model to ignore its rules or leak data. Defend: keep system prompt separate from user content, give tools least privilege, validate tool arguments, don't put secrets in prompts, filter output, ask a human to confirm risky actions.","Text ke andar chupa hukam. Tools ko kam ikhtiyar do, arguments check karo."],
+[12,0,"How do you evaluate a chatbot?","Make a test set of real questions with expected answers. Check retrieval (right chunk found?), groundedness (answer supported by sources?), and tone. Add thumbs up/down, log failures, and re-run the set after each prompt or model change.","Test questions ki list banao aur har change ke baad dobara chalao."],
+// ---------- 13 VIDEO CLAIMS ----------
+[13,1,"You said these in your video. How to stay safe?","You claimed: RAG, Vector DB, BullMQ, Redis, Supabase + Prisma, Docker, HIPAA, MCP, Agents, Embeddings, Tool calling, NestJS, Next.js. Expect a <b>follow-up on each</b>. For every topic, know: what it is, why use it, one real example. If asked deeper than you know, say what you know and how you would find out; never bluff.","Har claim pe follow-up aayega. Har topic: kya, kyun, ek misaal."],
+[13,1,"Video claim: RAG. Be ready for these","<ul><li>Explain the flow: chunk, embed, store, retrieve, prompt, answer.</li><li>Chunk size? 300-800 tokens with overlap.</li><li>How reduce wrong answers? Cite sources, answer only from context.</li><li>RAG vs fine-tuning? RAG for fresh/private data, fine-tuning for style/behaviour.</li></ul>","Flow bolo, chunking batao, RAG vs fine-tuning ka farq."],
+[13,1,"Video claim: Vector DB and Embeddings. Be ready","<ul><li>Embedding: vector of numbers capturing meaning.</li><li>Search: cosine similarity / nearest neighbours.</li><li>pgvector: Postgres extension; HNSW or IVFFlat index.</li><li>Why not keyword search only? Meaning, not exact words. Best: hybrid.</li></ul>","Embedding = matlab ke numbers, vector DB = nazdeek wale dhoondta hai."],
+[13,1,"Video claim: BullMQ and Redis. Be ready","<ul><li>Redis: in-memory store; BullMQ uses it for queues.</li><li>Queue, worker, job; retries with backoff; delayed and repeatable jobs.</li><li>Why a queue? Don't block the API; handle spikes; retry failures.</li><li>Idempotent jobs; dead-letter for failed jobs.</li><li>Other Redis uses: cache, rate limit, sessions.</li></ul>","Queue = API ko fast rakhna, retries, idempotent job."],
+[13,1,"Video claim: Supabase with Prisma. Be ready","<ul><li>Supabase = Postgres, so Prisma connects with a normal connection string.</li><li>Use the <b>pooled</b> URL (pgBouncer, add <code>?pgbouncer=true</code>) for the app and a <b>direct</b> URL (<code>directUrl</code>) for migrations.</li><li>Prisma connects as a DB role that usually <b>bypasses RLS</b>, so enforce permissions in NestJS (guards) or set up RLS for client access.</li><li>Auth: Supabase Auth issues the JWT; verify it in NestJS.</li></ul>","Pooled URL app ke liye, direct URL migrations ke liye. Prisma RLS bypass karta hai, isliye NestJS mein check."],
+[13,1,"Video claim: Docker. Be ready","<ul><li>Image vs container; Dockerfile; <code>docker compose</code> for app + DB + Redis.</li><li>Multi-stage build, <code>.dockerignore</code>, non-root user.</li><li>Volumes keep data; env vars for config; no secrets in image.</li><li>Used for: self-hosting Supabase, consistent dev/prod.</li></ul>","Dockerfile, compose, volumes, env vars."],
+[13,1,"Video claim: HIPAA. Be ready","<ul><li>US law protecting PHI (health data).</li><li>BAA with every vendor that touches PHI (cloud, AI provider).</li><li>Encrypt in transit and at rest, RBAC, audit logs, minimum necessary access.</li><li>No PHI in logs, URLs or non-BAA AI tools.</li></ul>Be honest about depth: say what you understand about the technical side.","BAA, encryption, access control, audit logs, logs mein PHI nahi."],
+[13,1,"Video claim: MCP, Agents, Tool calling. Be ready","<ul><li><b>Tool calling</b>: model picks a function and arguments; your code runs it.</li><li><b>MCP</b>: standard protocol (server exposes tools/resources, client app uses them).</li><li><b>Agent</b>: LLM loop of think, act (tool), observe, repeat.</li><li>Risks: wrong tool use, infinite loops, prompt injection; use step limits, least privilege, human approval.</li><li>Example: chatbot that calls <code>getOrderStatus(id)</code>.</li></ul>","Tool calling = function chunna, MCP = standard, Agent = loop. Ek example tayyar rakho."],
+[13,1,"Video claim: NestJS. Be ready","<ul><li>Module, controller, service; DI; decorators.</li><li>Guards (auth/roles), Pipes (validation with DTO + class-validator), Interceptors, Filters.</li><li>Scheduling: <code>@nestjs/schedule</code> vs BullMQ.</li><li>Config, testing (Jest), Prisma service, Swagger docs.</li></ul>","Module/controller/service, guard/pipe, scheduling."],
+[13,1,"Video claim: Next.js. Be ready","<ul><li>App Router, Server vs Client Components.</li><li>SSR, CSR, SSG, ISR; when to use each.</li><li>Data fetching, caching/revalidate, route handlers (API routes), middleware.</li><li><code>next/image</code>, loading and error files, env vars (<code>NEXT_PUBLIC_</code>).</li></ul>","Server/Client components aur SSR/SSG/ISR pe zaroor sawal aayega."]
+];
+D.forEach(function(c,i){c.id=i});
+
+var S={cat:-1,star:false,hide:false,order:[],i:0,flip:false,known:{}};
+try{var sv=JSON.parse(localStorage.getItem('fsk')||'{}');S.known=sv.known||{};}catch(e){}
+function save(){try{localStorage.setItem('fsk',JSON.stringify({known:S.known}))}catch(e){}}
+function $(id){return document.getElementById(id)}
+
+function build(shuffle){
+  var a=D.filter(function(c){
+    if(S.cat>=0&&c[0]!==S.cat)return false;
+    if(S.star&&!c[1])return false;
+    if(S.hide&&S.known[c.id])return false;
+    return true;
+  }).map(function(c){return c.id});
+  if(shuffle){for(var k=a.length-1;k>0;k--){var j=Math.floor(Math.random()*(k+1));var t=a[k];a[k]=a[j];a[j]=t}}
+  S.order=a;S.i=0;S.flip=false;render();
+}
+function chips(){
+  var h='<button class="chip'+(S.cat<0?' on':'')+'" data-c="-1">All ('+D.length+')</button>';
+  CATS.forEach(function(n,k){var cnt=D.filter(function(c){return c[0]===k}).length;h+='<button class="chip'+(S.cat===k?' on':'')+'" data-c="'+k+'">'+n+' ('+cnt+')</button>'});
+  $('chips').innerHTML=h;
+}
+function render(){
+  chips();
+  $('tStar').className='tg'+(S.star?' on':'');
+  $('tHide').className='tg'+(S.hide?' on':'');
+  var total=D.length,kn=Object.keys(S.known).filter(function(k){return S.known[k]}).length;
+  $('bar').style.width=(kn/total*100)+'%';
+  $('known').textContent='Known '+kn+' / '+total;
+  var st=$('stage');
+  if(!S.order.length){$('pos').textContent='0 cards';st.innerHTML='<div class="empty">Is filter mein koi card nahi bacha. 🎉<br>Filter badlo ya Reset dabao.</div>';return}
+  if(S.i>=S.order.length)S.i=0;
+  var c=D[S.order[S.i]];
+  $('pos').textContent='Card '+(S.i+1)+' / '+S.order.length;
+  st.innerHTML=
+   '<div class="scene"><div class="card'+(S.flip?' flip':'')+'" id="card">'+
+   '<div class="face front"><div class="cat"><span>'+CATS[c[0]]+'</span><span class="star">'+(c[1]?'⭐ priority':'')+'</span></div><div class="q">'+c[2]+'</div><div class="hint">tap to flip</div></div>'+
+   '<div class="face back"><div class="cat"><span>'+CATS[c[0]]+'</span><span class="star">'+(S.known[c.id]?'✓ known':'')+'</span></div><div class="a">'+c[3]+'</div><div class="u"><b>Urdu:</b> '+c[4]+'</div></div>'+
+   '</div></div>'+
+   '<div class="row"><button class="btn again" id="bAgain">Phir parho</button><button class="btn know" id="bKnow">Yaad hai ✓</button></div>'+
+   '<div class="row nav"><button class="btn" id="bPrev">←</button><button class="btn" style="flex:1" id="bFlip">Flip</button><button class="btn" id="bNext">→</button></div>';
+  $('card').onclick=flip;$('bFlip').onclick=flip;
+  $('bNext').onclick=function(){go(1)};$('bPrev').onclick=function(){go(-1)};
+  $('bKnow').onclick=function(){S.known[c.id]=true;save();advance()};
+  $('bAgain').onclick=function(){delete S.known[c.id];save();advance()};
+}
+function flip(){S.flip=!S.flip;var el=$('card');if(el)el.classList.toggle('flip',S.flip)}
+function go(d){S.i=(S.i+d+S.order.length)%S.order.length;S.flip=false;render()}
+function advance(){
+  if(S.hide){var keep=S.order[S.i];if(S.known[keep]){S.order.splice(S.i,1);if(S.i>=S.order.length)S.i=0;S.flip=false;render();return}}
+  go(1)
+}
+$('chips').onclick=function(e){var b=e.target.closest('.chip');if(!b)return;S.cat=+b.dataset.c;build(false)};
+$('tStar').onclick=function(){S.star=!S.star;build(false)};
+$('tHide').onclick=function(){S.hide=!S.hide;build(false)};
+$('tShuf').onclick=function(){build(true)};
+$('tReset').onclick=function(){S.known={};S.cat=-1;S.star=false;S.hide=false;save();build(false)};
+build(false);
+</script>
+</body>
+</html>
